@@ -7,7 +7,7 @@ import  pl.zaw.window._
  */
 object Main {
   def main(args: Array[String]) {
-    val mainWindow = MainWindow
+    val mainWindow = new MainWindow()
     val startupArray = Array[String]()
     mainWindow.startup(startupArray)
   }

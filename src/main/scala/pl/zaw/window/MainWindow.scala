@@ -1,10 +1,12 @@
 package pl.zaw.window
 
 import java.awt.Dimension
+import java.awt.image.BufferedImage
 import java.io.File
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
+import pl.zaw.image.Filter
 
 import scala.swing.BorderPanel.Position._
 import scala.swing._
@@ -15,13 +17,16 @@ import scala.swing._
  * @author Jakub Zawislak
  */
 
-object MainWindow extends SimpleSwingApplication {
+class MainWindow extends SimpleSwingApplication {
   private val logger = Logger(LoggerFactory.getLogger(this.getClass.getName))
   val preferredDimension = new Dimension(640, 480)
   //Some components
   val imagePanel = new ImagePanel {
     preferredSize = preferredDimension
   }
+
+  val additionalWindow = new AdditionalWindow(this)
+  additionalWindow.startup(Array[String]())
 
   def top = new MainFrame {
     title = "Helipad recognition"
@@ -44,6 +49,17 @@ object MainWindow extends SimpleSwingApplication {
           sys.exit(0)
         })
       }
+      contents += new Menu("Filters") {
+        contents += new MenuItem(
+          Action("Filter 1") {
+            additionalWindow.bufferedImage = imagePanel.applyFilter(Filter.filter)
+          })
+        contents += new Separator()
+        contents += new MenuItem(
+          Action("Filter 2") {
+            //chooseFile()
+          })
+      }
     }
   }
 
@@ -57,4 +73,11 @@ object MainWindow extends SimpleSwingApplication {
       imagePanel.path = chooser.selectedFile.getPath
     }
   }
+
+  def bufferedImage_=(newBufferedImage: BufferedImage) = {
+    imagePanel.bufferedImage = newBufferedImage
+  }
+
+  def bufferedImage = imagePanel.bufferedImage
+
 }
