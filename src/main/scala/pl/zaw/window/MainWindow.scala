@@ -6,7 +6,7 @@ import java.io.File
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
-import pl.zaw.image.Filter
+import pl.zaw.image._
 
 import scala.swing.BorderPanel.Position._
 import scala.swing._
@@ -50,15 +50,56 @@ class MainWindow extends SimpleSwingApplication {
         })
       }
       contents += new Menu("Filters") {
-        contents += new MenuItem(
-          Action("Filter 1") {
-            additionalWindow.bufferedImage = imagePanel.applyFilter(Filter.filter)
-          })
-        contents += new Separator()
-        contents += new MenuItem(
-          Action("Filter 2") {
-            //chooseFile()
-          })
+        contents += new Menu("Low Pass") {
+          contents += new DefaultFilterMenuItem(AverageFilter3)
+          contents += new DefaultFilterMenuItem(LP1Filter3)
+          contents += new DefaultFilterMenuItem(LP2Filter3)
+          contents += new DefaultFilterMenuItem(LP3Filter3)
+          contents += new DefaultFilterMenuItem(Gauss1Filter3)
+          contents += new Separator()
+          contents += new DefaultFilterMenuItem(AverageFilter5)
+          contents += new DefaultFilterMenuItem(CircularFilter5)
+          contents += new DefaultFilterMenuItem(PyramidFilter5)
+          contents += new DefaultFilterMenuItem(ConeFilter5)
+          contents += new DefaultFilterMenuItem(Gauss2Filter5)
+          contents += new DefaultFilterMenuItem(Gauss3Filter5)
+          contents += new DefaultFilterMenuItem(Gauss4Filter5)
+          contents += new Separator()
+          contents += new DefaultFilterMenuItem(Gauss5Filter7)
+        }
+        contents += new Menu("High Pass") {
+          contents += new DefaultFilterMenuItem(MeanRemovalFilter3)
+          contents += new DefaultFilterMenuItem(HP1Filter3)
+          contents += new DefaultFilterMenuItem(HP2Filter3)
+          contents += new DefaultFilterMenuItem(HP3Filter3)
+        }
+        contents += new Menu("Edge detection") {
+          contents += new Menu("Directional/Gradient Directional") {
+            contents += new DefaultFilterMenuItem(HorizontalFilter3)
+            contents += new DefaultFilterMenuItem(VerticalFilter3)
+            contents += new DefaultFilterMenuItem(UpperLeftFilter3)
+            contents += new DefaultFilterMenuItem(UpperRightFilter3)
+            contents += new DefaultFilterMenuItem(NorthWestFilter3)
+            contents += new DefaultFilterMenuItem(EastFilter3)
+            contents += new DefaultFilterMenuItem(SouthFilter3)
+          }
+          contents += new Menu("Embossing") {
+            contents += new DefaultFilterMenuItem(NorthEmbossingFilter3)
+            contents += new DefaultFilterMenuItem(SouthEastEmbossingFilter3)
+            contents += new DefaultFilterMenuItem(WestEmbossingFilter3)
+          }
+          contents += new Menu("Laplace") {
+            contents += new DefaultFilterMenuItem(Laplace1Filter3)
+            contents += new DefaultFilterMenuItem(Laplace2Filter3)
+            contents += new DefaultFilterMenuItem(Laplace3Filter3)
+            contents += new DefaultFilterMenuItem(Laplace4Filter3)
+          }
+        }
+        contents += new Menu("Ranking") {
+          contents += new DefaultFilterMenuItem(MedianRankFilter3)
+          contents += new DefaultFilterMenuItem(MinimumRankFilter3)
+          contents += new DefaultFilterMenuItem(MaximumRankFilter3)
+        }
       }
     }
   }
@@ -79,5 +120,12 @@ class MainWindow extends SimpleSwingApplication {
   }
 
   def bufferedImage = imagePanel.bufferedImage
+
+  class DefaultFilterMenuItem(filterType: FilterType) extends MenuItem(
+    Action(filterType.title) {
+      additionalWindow.bufferedImage = Filter.filter(imagePanel.bufferedImage, filterType)
+      logger.info(s"Applied: ${filterType.title}")
+    }
+  )
 
 }

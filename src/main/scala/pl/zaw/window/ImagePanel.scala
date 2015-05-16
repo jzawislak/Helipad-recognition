@@ -23,13 +23,7 @@ class ImagePanel extends Panel {
   }
 
   def path = _path
-
-  def applyFilter(filter: BufferedImage => BufferedImage): BufferedImage = {
-    //_bufferedImage = filter(_bufferedImage)
-    //repaint()
-    filter(_bufferedImage)
-  }
-
+  
   def bufferedImage_=(bufferedImage: BufferedImage) = {
     _bufferedImage = bufferedImage
     repaint()
