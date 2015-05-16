@@ -3,6 +3,7 @@ package pl.zaw.window
 import java.awt.Dimension
 import java.awt.image.BufferedImage
 import java.io.File
+import javax.swing.ToolTipManager
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
@@ -10,6 +11,7 @@ import pl.zaw.image._
 
 import scala.swing.BorderPanel.Position._
 import scala.swing._
+import scala.swing.event.{MouseEntered, MouseExited}
 
 /**
  * Created on 2015-05-12.
@@ -101,6 +103,27 @@ class MainWindow extends SimpleSwingApplication {
           contents += new DefaultFilterMenuItem(MaximumRankFilter3)
         }
       }
+      contents += new Menu("Threshold") {
+        contents += new Menu("Absolute yellow") {
+          for (i <- 0 to 250 by 15) {
+            contents += new AbsoluteThresholdMenuItem(s"Yellow $i", redLimit = (0, i), greenLimit = (0, i), blueLimit = (0, 255)) {
+              tooltip = "Sets absolute threshold limit for channels red and green (summary yellow). Min=0, max=255."
+            }
+          }
+        }
+        /*
+        contents += new Menu("Relative yellow") {
+            contents += new RelativeThresholdMenuItem(s"Yellow 1.2-1.4", redLimit = (2.2, 10.4), greenLimit = (2.2, 10.4), blueLimit = (0, 20)) {
+              tooltip =
+                """<html> Sets relative threshold limit for channels red and green (summary yellow). <br>
+                  | Firstly average brightness is calculated and then based on this average threshold is made.
+                  | Do not use it because it does not work.
+                  | </html>
+                """.stripMargin
+            }
+        }
+        */
+      }
     }
   }
 
@@ -121,11 +144,47 @@ class MainWindow extends SimpleSwingApplication {
 
   def bufferedImage = imagePanel.bufferedImage
 
-  class DefaultFilterMenuItem(filterType: FilterType) extends MenuItem(
+  abstract class DefaultMenuItem(action: Action) extends MenuItem(action) {
+    //hack for no delay in tooltip
+    val defaultDismissTimeout = ToolTipManager.sharedInstance.getDismissDelay
+    listenTo(mouse.moves)
+    reactions += {
+      case MouseEntered(_, _, _) => ToolTipManager.sharedInstance().setInitialDelay(0)
+      case MouseExited(_, _, _) => ToolTipManager.sharedInstance().setDismissDelay(defaultDismissTimeout)
+    }
+  }
+
+  class DefaultFilterMenuItem(filterType: FilterType) extends DefaultMenuItem(
     Action(filterType.title) {
       additionalWindow.bufferedImage = Filter.filter(imagePanel.bufferedImage, filterType)
       logger.info(s"Applied: ${filterType.title}")
     }
   )
+
+  class AbsoluteThresholdMenuItem(title: String,
+                                  redLimit: (Int, Int) = (0, 255),
+                                  greenLimit: (Int, Int) = (0, 255),
+                                  blueLimit: (Int, Int) = (0, 255)) extends DefaultMenuItem(
+    Action(title) {
+      additionalWindow.bufferedImage = Threshold.convertAbsolute(imagePanel.bufferedImage, redLimit, greenLimit, blueLimit)
+      logger.info(s"Applied: $title")
+    }
+  )
+
+  /**
+   * Doesn't work at all.
+   */
+  /*
+  @Deprecated
+  class RelativeThresholdMenuItem(title: String,
+                                  redLimit: (Double, Double) = (1, 1.1),
+                                  greenLimit: (Double, Double) = (1, 1.1),
+                                  blueLimit: (Double, Double) = (0, 2)) extends DefaultMenuItem(
+    Action(title) {
+      additionalWindow.bufferedImage = Threshold.convertRelative(imagePanel.bufferedImage, redLimit, greenLimit, blueLimit)
+      logger.info(s"Applied: $title")
+    }
+  )
+  */
 
 }
