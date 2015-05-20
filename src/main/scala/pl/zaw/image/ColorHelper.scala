@@ -33,6 +33,8 @@ case class ColorHelper(var red: Double = 0, var green: Double = 0, var blue: Dou
 }
 
 object ColorHelper {
+  val BLACK = 0xFF000000
+  val WHITE = 0xFFFFFFFF
   val maxColorVal = 255
 
   def standardize(colorVal: Double, maskSum: Double): Int = {

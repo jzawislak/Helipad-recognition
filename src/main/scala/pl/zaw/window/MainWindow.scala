@@ -42,17 +42,18 @@ class MainWindow extends SimpleSwingApplication {
     }
 
     menuBar = new MenuBar {
-      contents += new Menu("File") {
-        contents += new MenuItem(
+      contents += new DefaultMenu("File") {
+        contents += new DefaultMenuItem(
           Action("Open File") {
             chooseFile()
           })
-        contents += new MenuItem(Action("Exit") {
+        contents += new DefaultMenuItem(Action("Exit") {
           sys.exit(0)
         })
       }
-      contents += new Menu("Filters") {
-        contents += new Menu("Low Pass") {
+      contents += new DefaultMenu("Filters") {
+        tooltip = "Apply various filters to image."
+        contents += new DefaultMenu("Low Pass") {
           contents += new DefaultFilterMenuItem(AverageFilter3)
           contents += new DefaultFilterMenuItem(LP1Filter3)
           contents += new DefaultFilterMenuItem(LP2Filter3)
@@ -69,14 +70,14 @@ class MainWindow extends SimpleSwingApplication {
           contents += new Separator()
           contents += new DefaultFilterMenuItem(Gauss5Filter7)
         }
-        contents += new Menu("High Pass") {
+        contents += new DefaultMenu("High Pass") {
           contents += new DefaultFilterMenuItem(MeanRemovalFilter3)
           contents += new DefaultFilterMenuItem(HP1Filter3)
           contents += new DefaultFilterMenuItem(HP2Filter3)
           contents += new DefaultFilterMenuItem(HP3Filter3)
         }
-        contents += new Menu("Edge detection") {
-          contents += new Menu("Directional/Gradient Directional") {
+        contents += new DefaultMenu("Edge detection") {
+          contents += new DefaultMenu("Directional/Gradient Directional") {
             contents += new DefaultFilterMenuItem(HorizontalFilter3)
             contents += new DefaultFilterMenuItem(VerticalFilter3)
             contents += new DefaultFilterMenuItem(UpperLeftFilter3)
@@ -85,29 +86,29 @@ class MainWindow extends SimpleSwingApplication {
             contents += new DefaultFilterMenuItem(EastFilter3)
             contents += new DefaultFilterMenuItem(SouthFilter3)
           }
-          contents += new Menu("Embossing") {
+          contents += new DefaultMenu("Embossing") {
             contents += new DefaultFilterMenuItem(NorthEmbossingFilter3)
             contents += new DefaultFilterMenuItem(SouthEastEmbossingFilter3)
             contents += new DefaultFilterMenuItem(WestEmbossingFilter3)
           }
-          contents += new Menu("Laplace") {
+          contents += new DefaultMenu("Laplace") {
             contents += new DefaultFilterMenuItem(Laplace1Filter3)
             contents += new DefaultFilterMenuItem(Laplace2Filter3)
             contents += new DefaultFilterMenuItem(Laplace3Filter3)
             contents += new DefaultFilterMenuItem(Laplace4Filter3)
           }
         }
-        contents += new Menu("Ranking") {
+        contents += new DefaultMenu("Ranking") {
           contents += new DefaultFilterMenuItem(MedianRankFilter3)
           contents += new DefaultFilterMenuItem(MinimumRankFilter3)
           contents += new DefaultFilterMenuItem(MaximumRankFilter3)
         }
       }
-      contents += new Menu("Threshold") {
-        contents += new Menu("Absolute yellow") {
+      contents += new DefaultMenu("Threshold") {
+        contents += new DefaultMenu("Absolute yellow") {
+          tooltip = "Sets absolute threshold limit for channels red and green (summary yellow). Min=0, max=255."
           for (i <- 0 to 250 by 15) {
             contents += new AbsoluteThresholdMenuItem(s"Yellow $i", redLimit = (0, i), greenLimit = (0, i), blueLimit = (0, 255)) {
-              tooltip = "Sets absolute threshold limit for channels red and green (summary yellow). Min=0, max=255."
             }
           }
         }
@@ -123,6 +124,13 @@ class MainWindow extends SimpleSwingApplication {
             }
         }
         */
+      }
+      contents += new DefaultMenu("Segmentation") {
+        contents += new DefaultMenuItem(
+          Action("Area growth") {
+            additionalWindow.bufferedImage = Segmentation.getSegments(imagePanel.bufferedImage)
+            logger.info(s"Segmentation applied")
+          })
       }
     }
   }
@@ -144,14 +152,24 @@ class MainWindow extends SimpleSwingApplication {
 
   def bufferedImage = imagePanel.bufferedImage
 
-  abstract class DefaultMenuItem(action: Action) extends MenuItem(action) {
+  trait NoDelayTrait {
     //hack for no delay in tooltip
-    val defaultDismissTimeout = ToolTipManager.sharedInstance.getDismissDelay
-    listenTo(mouse.moves)
-    reactions += {
-      case MouseEntered(_, _, _) => ToolTipManager.sharedInstance().setInitialDelay(0)
-      case MouseExited(_, _, _) => ToolTipManager.sharedInstance().setDismissDelay(defaultDismissTimeout)
+    def removeDelay(publisher: Publisher) = {
+      val defaultDismissTimeout = ToolTipManager.sharedInstance.getDismissDelay
+      listenTo(publisher)
+      reactions += {
+        case MouseEntered(_, _, _) => ToolTipManager.sharedInstance().setInitialDelay(0)
+        case MouseExited(_, _, _) => ToolTipManager.sharedInstance().setDismissDelay(defaultDismissTimeout)
+      }
     }
+  }
+
+  abstract class DefaultMenu(title: String) extends Menu(title) with NoDelayTrait{
+    removeDelay(mouse.moves)
+  }
+
+  class DefaultMenuItem(action: Action) extends MenuItem(action) with NoDelayTrait{
+    removeDelay(mouse.moves)
   }
 
   class DefaultFilterMenuItem(filterType: FilterType) extends DefaultMenuItem(

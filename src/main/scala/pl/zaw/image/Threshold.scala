@@ -34,9 +34,9 @@ object Threshold {
         color.getGreen < greenLimit._2 &&
         color.getBlue < blueLimit._2
       ) {
-        newImage.setRGB(col, row, 0xfffffff)
+        newImage.setRGB(col, row, ColorHelper.WHITE)
       } else {
-        newImage.setRGB(col, row, 0)
+        newImage.setRGB(col, row, ColorHelper.BLACK)
       }
     }
     newImage
@@ -78,9 +78,9 @@ object Threshold {
         color.getGreen.toDouble / average < greenLimit._2 &&
         color.getBlue.toDouble / average < blueLimit._2
       ) {
-        newImage.setRGB(col, row, 0)
+        newImage.setRGB(col, row, ColorHelper.BLACK)
       } else {
-        newImage.setRGB(col, row, 0xfffffff)
+        newImage.setRGB(col, row, ColorHelper.WHITE)
       }
     }
     newImage
