@@ -7,7 +7,10 @@ import javax.swing.ToolTipManager
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
-import pl.zaw.image._
+import pl.zaw.image.filter._
+import pl.zaw.image.moments.Moments
+import pl.zaw.image.segmentation.Segmentation
+import pl.zaw.image.threshold.Threshold
 
 import scala.swing.BorderPanel.Position._
 import scala.swing._
@@ -128,9 +131,18 @@ class MainWindow extends SimpleSwingApplication {
       contents += new DefaultMenu("Segmentation") {
         contents += new DefaultMenuItem(
           Action("Area growth") {
-            additionalWindow.bufferedImage = Segmentation.getSegments(imagePanel.bufferedImage)
+            additionalWindow.bufferedImage = Segmentation.getSegments(imagePanel.bufferedImage)._1
             logger.info(s"Segmentation applied")
           })
+        contents += new DefaultMenuItem(
+          Action("Area growth with m-params") {
+            val tup = Segmentation.getSegments(imagePanel.bufferedImage)
+            additionalWindow.bufferedImage = tup._1
+            val mParams = Moments.calculateParams(tup, logParams = true)
+            logger.info(s"Segmentation with m-params applied")
+          }) {
+          tooltip = "The difference is calculating params that are saved to Moments_LOG.txt file."
+        }
       }
     }
   }
@@ -164,11 +176,11 @@ class MainWindow extends SimpleSwingApplication {
     }
   }
 
-  abstract class DefaultMenu(title: String) extends Menu(title) with NoDelayTrait{
+  abstract class DefaultMenu(title: String) extends Menu(title) with NoDelayTrait {
     removeDelay(mouse.moves)
   }
 
-  class DefaultMenuItem(action: Action) extends MenuItem(action) with NoDelayTrait{
+  class DefaultMenuItem(action: Action) extends MenuItem(action) with NoDelayTrait {
     removeDelay(mouse.moves)
   }
 

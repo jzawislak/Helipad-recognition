@@ -1,4 +1,4 @@
-package pl.zaw.image
+package pl.zaw.image.util
 
 import java.awt.Color
 

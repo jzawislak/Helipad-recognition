@@ -1,10 +1,11 @@
-package pl.zaw.image
+package pl.zaw.image.threshold
 
 import java.awt.Color
 import java.awt.image.BufferedImage
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
+import pl.zaw.image.util.ColorHelper
 
 /**
  * Created on 2015-05-16.
