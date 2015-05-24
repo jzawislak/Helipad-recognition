@@ -1,4 +1,4 @@
-package pl.zaw.image.moments
+package pl.zaw.image.operations
 
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -152,15 +152,19 @@ object Moments {
 
 
             minMaxDistArray(segCount)._1,
-            minMaxDistArray(segCount)._2,
+            minMaxDistArray(segCount)._2, // as 17
             minMaxRowColArray(segCount)._1,
             minMaxRowColArray(segCount)._2,
             minMaxRowColArray(segCount)._3,
             minMaxRowColArray(segCount)._4,
-            //row central moment
+            //row central moment as 22
             mc(3)(1),
-            //column central moment
-            mc(3)(2)
+            //column central moment as 23
+            mc(3)(2),
+            //area as 24
+            areaArray(segCount),
+            //perimeter as 25
+            perimeterArray(segCount)
           )
         }
 
@@ -180,9 +184,11 @@ object Moments {
           } {
             segmentCount = segmentCount + 1
             out.write(s"Segment $segmentCount\t")
-            out.write(segment.mkString("\t"))
-            out.write(s"\t${areaArray(segmentCount - 1)} \t")
-            out.write(s"${perimeterArray(segmentCount - 1)} \t")
+            for {
+              param <- segment
+            } {
+              out.write(f"${param}%.20f\t")
+            }
             out.write("\n")
           }
         } finally {

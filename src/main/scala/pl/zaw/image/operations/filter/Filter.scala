@@ -1,4 +1,4 @@
-package pl.zaw.image.filter
+package pl.zaw.image.operations.filter
 
 import java.awt.Color
 import java.awt.image.BufferedImage

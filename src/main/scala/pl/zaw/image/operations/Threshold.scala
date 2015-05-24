@@ -1,4 +1,4 @@
-package pl.zaw.image.threshold
+package pl.zaw.image.operations
 
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -28,16 +28,16 @@ object Threshold {
       col <- 0 to bufferedImage.getWidth - 1
       color = new Color(bufferedImage.getRGB(col, row))
     } {
-      if (color.getRed > redLimit._1 &&
-        color.getGreen > greenLimit._1 &&
-        color.getBlue > blueLimit._1 &&
-        color.getRed < redLimit._2 &&
-        color.getGreen < greenLimit._2 &&
-        color.getBlue < blueLimit._2
+      if (color.getRed >= redLimit._1 &&
+        color.getGreen >= greenLimit._1 &&
+        color.getBlue >= blueLimit._1 &&
+        color.getRed <= redLimit._2 &&
+        color.getGreen <= greenLimit._2 &&
+        color.getBlue <= blueLimit._2
       ) {
-        newImage.setRGB(col, row, ColorHelper.WHITE)
-      } else {
         newImage.setRGB(col, row, ColorHelper.BLACK)
+      } else {
+        newImage.setRGB(col, row, ColorHelper.WHITE)
       }
     }
     newImage

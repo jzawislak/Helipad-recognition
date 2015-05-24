@@ -3,14 +3,13 @@ package pl.zaw.window
 import java.awt.Dimension
 import java.awt.image.BufferedImage
 import java.io.File
+import javax.imageio.ImageIO
 import javax.swing.ToolTipManager
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
-import pl.zaw.image.filter._
-import pl.zaw.image.moments.Moments
-import pl.zaw.image.segmentation.Segmentation
-import pl.zaw.image.threshold.Threshold
+import pl.zaw.image.operations.filter._
+import pl.zaw.image.operations.{HelipadDetection, Moments, Segmentation, Threshold}
 
 import scala.swing.BorderPanel.Position._
 import scala.swing._
@@ -49,6 +48,11 @@ class MainWindow extends SimpleSwingApplication {
         contents += new DefaultMenuItem(
           Action("Open File") {
             chooseFile()
+          })
+        contents += new DefaultMenuItem(
+          Action("Save File") {
+            val file = new File("./temp.png")
+            ImageIO.write(bufferedImage, "png", file)
           })
         contents += new DefaultMenuItem(Action("Exit") {
           sys.exit(0)
@@ -109,9 +113,16 @@ class MainWindow extends SimpleSwingApplication {
       }
       contents += new DefaultMenu("Threshold") {
         contents += new DefaultMenu("Absolute yellow") {
-          tooltip = "Sets absolute threshold limit for channels red and green (summary yellow). Min=0, max=255."
+          tooltip = "Channels red and green between selected value and 255. Min=0, max=255."
           for (i <- 0 to 250 by 15) {
-            contents += new AbsoluteThresholdMenuItem(s"Yellow $i", redLimit = (0, i), greenLimit = (0, i), blueLimit = (0, 255)) {
+            contents += new AbsoluteThresholdMenuItem(s"Yellow $i", redLimit = (i, 255), greenLimit = (i, 255), blueLimit = (0, 170)) {
+            }
+          }
+        }
+        contents += new DefaultMenu("Absolute white") {
+          tooltip = "All channels between selected value and 255. Min=0, max=255."
+          for (i <- 0 to 250 by 15) {
+            contents += new AbsoluteThresholdMenuItem(s"Yellow $i", redLimit = (i, 255), greenLimit = (i, 255), blueLimit = (i, 255)) {
             }
           }
         }
@@ -141,8 +152,15 @@ class MainWindow extends SimpleSwingApplication {
             val mParams = Moments.calculateParams(tup, logParams = true)
             logger.info(s"Segmentation with m-params applied")
           }) {
-          tooltip = "The difference is calculating params that are saved to Moments_LOG.txt file."
+          tooltip = "The difference are calculated params that are saved to Moments_LOG.txt file."
         }
+      }
+      contents += new DefaultMenu("Helipad detection") {
+        contents += new DefaultMenuItem(
+          Action("Path 1") {
+            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage)
+            logger.info(s"Helipads detected")
+          })
       }
     }
   }

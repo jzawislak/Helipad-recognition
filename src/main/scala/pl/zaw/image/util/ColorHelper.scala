@@ -36,6 +36,7 @@ object ColorHelper {
   val BLACK = 0xFF000000
   val WHITE = 0xFFFFFFFF
   val maxColorVal = 255
+  val random = new scala.util.Random(1)
 
   def standardize(colorVal: Double, maskSum: Double): Int = {
     val resultColor = if (maskSum == 0) colorVal.toInt else (colorVal / maskSum).toInt
@@ -47,5 +48,9 @@ object ColorHelper {
     } else {
       resultColor
     }
+  }
+
+  def getRandomColor = {
+    new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255))
   }
 }

@@ -1,4 +1,4 @@
-package pl.zaw.image.segmentation
+package pl.zaw.image.operations
 
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -16,7 +16,6 @@ import scala.collection.mutable.ListBuffer
  */
 object Segmentation {
   private val logger = Logger(LoggerFactory.getLogger(this.getClass.getName))
-  val random = new scala.util.Random(1)
 
   /**
    * Performs segmentation of black and white image.
@@ -28,7 +27,7 @@ object Segmentation {
     val allSegmentsArray = Array.ofDim[(Int, Color)](allSegments.getHeight, allSegments.getWidth)
     //list of (col, row)
     val candidatesList = new ListBuffer[(Int, Int)]
-    var newColor = new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255))
+    var newColor = ColorHelper.getRandomColor
 
     //copy old image and initialize array of segments
     for {
@@ -49,7 +48,7 @@ object Segmentation {
       if (status == -1) {
         candidatesList.append((col, row))
         segmentCount = segmentCount + 1
-        newColor = new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255))
+        newColor = ColorHelper.getRandomColor
       }
       while (candidatesList.size != 0) {
         val head = candidatesList.remove(0)
@@ -76,6 +75,7 @@ object Segmentation {
         }
       }
     }
+    logger.info(s"Found ${segmentCount+1} segments")
     (allSegments, allSegmentsArray, segmentCount + 1)
   }
 }

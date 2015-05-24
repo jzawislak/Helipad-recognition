@@ -1,4 +1,4 @@
-package pl.zaw.image.filter
+package pl.zaw.image.operations.filter
 
 /**
  * Created on 2015-05-16.
