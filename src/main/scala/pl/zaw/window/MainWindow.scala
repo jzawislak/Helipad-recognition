@@ -114,14 +114,14 @@ class MainWindow extends SimpleSwingApplication {
       contents += new DefaultMenu("Threshold") {
         contents += new DefaultMenu("Absolute yellow") {
           tooltip = "Channels red and green between selected value and 255. Min=0, max=255."
-          for (i <- 0 to 250 by 15) {
+          for (i <- 0 to 250 by 10) {
             contents += new AbsoluteThresholdMenuItem(s"Yellow $i", redLimit = (i, 255), greenLimit = (i, 255), blueLimit = (0, 170)) {
             }
           }
         }
         contents += new DefaultMenu("Absolute white") {
           tooltip = "All channels between selected value and 255. Min=0, max=255."
-          for (i <- 0 to 250 by 15) {
+          for (i <- 0 to 250 by 10) {
             contents += new AbsoluteThresholdMenuItem(s"Yellow $i", redLimit = (i, 255), greenLimit = (i, 255), blueLimit = (i, 255)) {
             }
           }
@@ -157,8 +157,18 @@ class MainWindow extends SimpleSwingApplication {
       }
       contents += new DefaultMenu("Helipad detection") {
         contents += new DefaultMenuItem(
-          Action("Path 1") {
-            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage)
+          Action("Detect H signs") {
+            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, 1)
+            logger.info(s"H signs detected")
+          })
+        contents += new DefaultMenuItem(
+          Action("Detect circles") {
+            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, 2)
+            logger.info(s"Circles detected")
+          })
+        contents += new DefaultMenuItem(
+          Action("Detect helipads") {
+            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, 3)
             logger.info(s"Helipads detected")
           })
       }
