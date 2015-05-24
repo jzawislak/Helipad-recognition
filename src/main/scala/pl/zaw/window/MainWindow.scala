@@ -51,8 +51,10 @@ class MainWindow extends SimpleSwingApplication {
           })
         contents += new DefaultMenuItem(
           Action("Save File") {
-            val file = new File("./temp.png")
-            ImageIO.write(bufferedImage, "png", file)
+            if (bufferedImage != null) {
+              val file = new File("./temp.png")
+              ImageIO.write(bufferedImage, "png", file)
+            }
           })
         contents += new DefaultMenuItem(Action("Exit") {
           sys.exit(0)

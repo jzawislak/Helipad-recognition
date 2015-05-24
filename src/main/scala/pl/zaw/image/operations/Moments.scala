@@ -2,10 +2,10 @@ package pl.zaw.image.operations
 
 import java.awt.Color
 import java.awt.image.BufferedImage
-import java.io.{File, PrintWriter}
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
+import pl.zaw.image.util.SegmentationUtil
 
 /**
  * Object that can calculate various segments parameters.
@@ -169,31 +169,7 @@ object Moments {
         }
 
       if (logParams) {
-        logger.info("Saving mParams to file")
-
-        val logFile = new File("Moments_LOG.txt")
-        val out = new PrintWriter(logFile)
-        var segmentCount: Int = 0
-        out.write(s"Segment\tM1\tM2\tM3\tM4\tM5\tM6\tM7\tM8\tM9\tM10\tW1\tW2\tW3\tW7\tW8\tW9\t" +
-          s"DistMin\tDistMax\tRowMin\tRowMax\tColMin\tColMax\tCentralRow\tCentralCol\t" +
-          s"Area\tPerimeter\n")
-
-        try {
-          for {
-            segment <- mLast
-          } {
-            segmentCount = segmentCount + 1
-            out.write(s"Segment $segmentCount\t")
-            for {
-              param <- segment
-            } {
-              out.write(f"${param}%.20f\t")
-            }
-            out.write("\n")
-          }
-        } finally {
-          out.close()
-        }
+        SegmentationUtil.logSegmentsToFile(mLast)
       }
       mLast
   }

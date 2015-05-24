@@ -2,7 +2,6 @@ package pl.zaw.image.operations
 
 import java.awt.BasicStroke
 import java.awt.image.BufferedImage
-import java.io.{File, PrintWriter}
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
@@ -52,41 +51,16 @@ object HelipadDetection {
   def path1(bufferedImage: BufferedImage) = {
     logger.info("Applying threshold.")
     val thresholdImage = Threshold.convertAbsolute(bufferedImage, redLimit = (150, 255), greenLimit = (150, 255), blueLimit = (150, 255))
-    // logger.info("Applying minimum filter.")
-    // val minimumRankImage = Filter.filter(thresholdImage, MinimumRankFilter3)
+    //Minimum Rank filter is not used, because it takes a lot of time
+    //and does not improve the results significantly.
+    //    logger.info("Applying minimum filter.")
+    //    val minimumRankImage = Filter.filter(thresholdImage, MinimumRankFilter3)
     logger.info("Calculating segments.")
     val tup = Segmentation.getSegments(thresholdImage)
-    //TODO change to false
-    val mParams = Moments.calculateParams(tup, logParams = true)
+    val mParams = Moments.calculateParams(tup, logParams = false)
     val segFound = detectHFromParams(mParams)
 
-    if (false) {
-      logger.info("Saving mParams to file")
-
-      val logFile = new File("Moments_LOG.txt")
-      val out = new PrintWriter(logFile)
-      var segmentCount: Int = 0
-      out.write(s"Segment\tM1\tM2\tM3\tM4\tM5\tM6\tM7\tM8\tM9\tM10\tW1\tW2\tW3\tW7\tW8\tW9\t" +
-        s"DistMin\tDistMax\tRowMin\tRowMax\tColMin\tColMax\tCentralRow\tCentralCol\t" +
-        s"Area\tPerimeter\n")
-
-      try {
-        for {
-          segment <- segFound
-        } {
-          segmentCount = segmentCount + 1
-          out.write(s"Segment $segmentCount\t")
-          for {
-            param <- segment
-          } {
-            out.write(f"${param}%.20f\t")
-          }
-          out.write("\n")
-        }
-      } finally {
-        out.close()
-      }
-    }
+    //SegmentationUtil.logSegmentsToFile(segFound)
 
     segFound
   }
@@ -99,41 +73,16 @@ object HelipadDetection {
   def path2(bufferedImage: BufferedImage) = {
     logger.info("Applying threshold.")
     val thresholdImage = Threshold.convertAbsolute(bufferedImage, redLimit = (150, 255), greenLimit = (150, 255), blueLimit = (0, 170))
-    logger.info("Applying minimum filter.")
-    // val minimumRankImage = Filter.filter(thresholdImage, MinimumRankFilter3)
+    //Minimum Rank filter is not used, because it takes a lot of time
+    //and does not improve the results significantly.
+    //    logger.info("Applying minimum filter.")
+    //    val minimumRankImage = Filter.filter(thresholdImage, MinimumRankFilter3)
     logger.info("Calculating segments.")
     val tup = Segmentation.getSegments(thresholdImage)
-    //TODO change to false
     val mParams = Moments.calculateParams(tup, logParams = false)
     val segFound = detectCircleFromParams(mParams)
 
-    if (true) {
-      logger.info("Saving mParams to file")
-
-      val logFile = new File("Moments_LOG.txt")
-      val out = new PrintWriter(logFile)
-      var segmentCount: Int = 0
-      out.write(s"Segment\tM1\tM2\tM3\tM4\tM5\tM6\tM7\tM8\tM9\tM10\tW1\tW2\tW3\tW7\tW8\tW9\t" +
-        s"DistMin\tDistMax\tRowMin\tRowMax\tColMin\tColMax\tCentralRow\tCentralCol\t" +
-        s"Area\tPerimeter\n")
-
-      try {
-        for {
-          segment <- segFound
-        } {
-          segmentCount = segmentCount + 1
-          out.write(s"Segment $segmentCount\t")
-          for {
-            param <- segment
-          } {
-            out.write(f"${param}%.20f\t")
-          }
-          out.write("\n")
-        }
-      } finally {
-        out.close()
-      }
-    }
+    //SegmentationUtil.logSegmentsToFile(segFound)
 
     segFound
   }
@@ -144,14 +93,17 @@ object HelipadDetection {
    * @return list of segments containing H marks
    */
   def path3(bufferedImage: BufferedImage) = {
+    logger.info("Searching for H marks.")
     val hFound = path1(bufferedImage)
+    logger.info("Searching for circles.")
     val circleFound = path2(bufferedImage)
-
 
     val heliFound = circleFound.filter { circle =>
       val relatedH = hFound.filter { h =>
-        //distance between central moments < 10% of max distance in H sign
-        if (Math.sqrt(Math.pow(circle(22) - h(22), 2) + Math.pow(circle(23) - h(23), 2)) < 0.15 * h(17)) {
+        //Distance between central moments < 10% of max distance in H sign
+        if (Math.sqrt(Math.pow(circle(22) - h(22), 2) + Math.pow(circle(23) - h(23), 2)) < 0.2 * h(17)
+          //Distance between average of min and max < 10% of max distance in H sign
+          || Math.sqrt(Math.pow((circle(18) + circle(19) - h(18) - h(19)) / 2, 2) + Math.pow((circle(20) + circle(21) - h(20) - h(21)) / 2, 2)) < 0.2 * h(17)) {
           true
         } else {
           false
@@ -169,7 +121,8 @@ object HelipadDetection {
     val hFound = mParams.filter(segment => {
       var conCount = 0
 
-      if (segment(24) > 50) /* area */ {
+      //There are some comments indicating values that may be useful for algorithm tuning in the future.
+      if (segment(24) > 100) /* area */ {
         if (segment(0) > 0.28 && segment(0) < 0.38) conCount = conCount + 1 /* M1 */
         //30-38
         //if (truncateAt(segment(3), 6) == 0) conCount = conCount + 1 /* M4 */
@@ -178,17 +131,17 @@ object HelipadDetection {
         if (segment(6) > 0.023 && segment(6) < 0.03) conCount = conCount + 1 /* M7 */
         //0.024-0.03
         if (segment(13) > 0.10 && segment(13) < 0.15) conCount = conCount + 1 /* W7, maybe decrease lower bound */
-        //slabe
         if (segment(14) > 0.17 && segment(14) < 0.22) conCount = conCount + 1 /* W8 */
-        //moze podniesc dolne do 0.18
+        //maybe increase lower bound to 0.18
         if (segment(15) > 0.4 && segment(15) < 0.52) conCount = conCount + 1 /* W9 */
-        //zmniejszyc dolne do 0.35
+        //maybe decrease lower bound to 0.35
 
         if (conCount > 3) {
           true
         } else {
           conCount = 0
-          //dla przechylonych bokiem do kamery
+          //H leaned to camera with its side.
+          //From this point of view ->H.
           if (segment(0) >= 0.38 && segment(0) < 0.6) conCount = conCount + 1 /* M1 */
           if (truncateAt(segment(4), 5) == 0) conCount = conCount + 1 /* M5 */
           if (segment(6) > 0.014 && segment(6) <= 0.023) conCount = conCount + 1 /* M7 */
@@ -201,7 +154,9 @@ object HelipadDetection {
           } else {
             conCount = 0
 
-            //dla przechylonych nozkami do kamery
+            //H leaned to camera with its bottom.
+            //From this point of view H.
+            //                        ^
             if (segment(0) > 0.22 && segment(0) <= 0.28) conCount = conCount + 1 /* M1 */
             if (truncateAt(segment(4), 5) == 0) conCount = conCount + 1 /* M5 */
             if (segment(6) > 0.015 && segment(6) <= 0.023) conCount = conCount + 1 /* M7 */
@@ -227,8 +182,8 @@ object HelipadDetection {
     val circleFound = mParams.filter(segment => {
       var conCount = 0
 
-      if (segment(24) > 50) /* area */ {
-        if (segment(0) > 0.9 && segment(0) < 1.1) conCount = conCount + 1 /* M1 */
+      if (segment(24) > 250) /* area */ {
+        if (segment(0) > 0.9 && segment(0) < 1.2) conCount = conCount + 1 /* M1 */
         if (truncateAt(segment(4), 5) == 0) conCount = conCount + 1 /* M5 */
         if (segment(6) > 0.14 && segment(6) < 0.024) conCount = conCount + 1 /* M7 */
         if ((segment(13) > 0.8 && segment(13) < 0.9)
@@ -241,7 +196,7 @@ object HelipadDetection {
         } else {
           var conCount = 0
 
-          //dla splaszczonych mocno
+          //very flattened circles
           if (segment(0) > 0.6 && segment(0) <= 0.9) conCount = conCount + 1 /* M1 */
           if (truncateAt(segment(4), 5) == 0) conCount = conCount + 1 /* M5 */
           if (segment(6) > 0.02 && segment(6) <= 0.14) conCount = conCount + 1 /* M7 */
@@ -254,8 +209,8 @@ object HelipadDetection {
           } else {
             var conCount = 0
 
-            //dla splaszczonych srednio
-            if (segment(0) > 0.9 && segment(0) < 1.1) conCount = conCount + 1 /* M1 */
+            //medium flattened circles
+            if (segment(0) > 0.9 && segment(0) < 1.2) conCount = conCount + 1 /* M1 */
             if (truncateAt(segment(4), 5) == 0) conCount = conCount + 1 /* M5 */
             if (segment(6) > 0.14 && segment(6) < 0.24) conCount = conCount + 1 /* M7 */
             if (segment(13) > 0.35 && segment(13) <= 0.55) conCount = conCount + 1 /* W7 */
