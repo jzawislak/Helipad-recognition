@@ -10,6 +10,7 @@ import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 import pl.zaw.image.operations.filter._
 import pl.zaw.image.operations.{HelipadDetection, Moments, Segmentation, Threshold}
+import pl.zaw.image.util.SegmentationUtil
 
 import scala.swing.BorderPanel.Position._
 import scala.swing._
@@ -55,7 +56,9 @@ class MainWindow extends SimpleSwingApplication {
               val file = new File("./temp.png")
               ImageIO.write(bufferedImage, "png", file)
             }
-          })
+          }) {
+          tooltip = "Save current image to ./temp.png."
+        }
         contents += new DefaultMenuItem(Action("Exit") {
           sys.exit(0)
         })
@@ -154,7 +157,7 @@ class MainWindow extends SimpleSwingApplication {
             val mParams = Moments.calculateParams(tup, logParams = true)
             logger.info(s"Segmentation with m-params applied")
           }) {
-          tooltip = "The difference are calculated params that are saved to Moments_LOG.txt file."
+          tooltip = s"The difference are calculated params (shape descriptors) that are saved to ${SegmentationUtil.LOG_FILENAME} file."
         }
       }
       contents += new DefaultMenu("Helipad detection") {
