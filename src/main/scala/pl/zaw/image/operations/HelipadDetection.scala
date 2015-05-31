@@ -5,6 +5,8 @@ import java.awt.{BasicStroke, Font}
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
+import pl.zaw.core.config.ConfigUtil
+import pl.zaw.core.config.Implicits._
 import pl.zaw.image.operations.filter.{AverageFilter3, Filter}
 import pl.zaw.image.util.ColorHelper
 
@@ -47,7 +49,10 @@ object HelipadDetection {
    * @return list of segments containing H marks
    */
   def pathThresholdH(bufferedImage: BufferedImage) = {
-    val thresholdImage = Threshold.convertAbsolute(bufferedImage, redLimit = (150, 255), greenLimit = (150, 255), blueLimit = (150, 255))
+    val thresholdImage = Threshold.convertAbsolute(bufferedImage,
+      redLimit = (ConfigUtil.get[Int]("threshold.white_threshold").getOrElse(150), 255),
+      greenLimit = (ConfigUtil.get[Int]("threshold.white_threshold").getOrElse(150), 255),
+      blueLimit = (ConfigUtil.get[Int]("threshold.white_threshold").getOrElse(150), 255))
     //Minimum Rank filter is not used, because it takes a lot of time
     //and does not improve the results significantly.
     //    logger.info("Applying minimum filter.")
@@ -67,7 +72,10 @@ object HelipadDetection {
    * @return list of segments containing H marks
    */
   def pathThresholdCircle(bufferedImage: BufferedImage) = {
-    val thresholdImage = Threshold.convertAbsolute(bufferedImage, redLimit = (150, 255), greenLimit = (150, 255), blueLimit = (0, 170))
+    val thresholdImage = Threshold.convertAbsolute(bufferedImage,
+      redLimit = (ConfigUtil.get[Int]("threshold.yellow_threshold").getOrElse(150), 255),
+      greenLimit = (ConfigUtil.get[Int]("threshold.yellow_threshold").getOrElse(150), 255),
+      blueLimit = (0, ConfigUtil.get[Int]("threshold.blue_threshold").getOrElse(170)))
     //Minimum Rank filter is not used, because it takes a lot of time
     //and does not improve the results significantly.
     //    logger.info("Applying minimum filter.")
@@ -104,7 +112,7 @@ object HelipadDetection {
   def pathColorHeli(bufferedImage: BufferedImage) = {
     var filteredImage = bufferedImage
     for {
-      i <- 1 to 3
+      i <- 1 to ConfigUtil.get[Int]("color.average_filter_number").getOrElse(3)
     } {
       logger.info(s"Average filter number $i.")
       filteredImage = Filter.filter(filteredImage, AverageFilter3)
@@ -155,7 +163,7 @@ object HelipadDetection {
       var conCount = 0
 
       //There are some comments indicating values that may be useful for algorithm tuning in the future.
-      if (segment(24) > 100) /* area */ {
+      if (segment(24) >= ConfigUtil.get[Int]("min_h_size").getOrElse(100)) /* area */ {
         if (segment(0) > 0.28 && segment(0) < 0.38) conCount = conCount + 1 /* M1 */
         //30-38
         //if (truncateAt(segment(3), 6) == 0) conCount = conCount + 1 /* M4 */
@@ -217,7 +225,7 @@ object HelipadDetection {
       var conCount = 0
 
       //M1 could be set as a must
-      if (segment(24) > 250) /* area */ {
+      if (segment(24) >= ConfigUtil.get[Int]("min_circle_size").getOrElse(250)) /* area */ {
         if (segment(0) > 0.9 && segment(0) < 1.2) conCount = conCount + 1 /* M1 */
         if (truncateAt(segment(4), 5) == 0) conCount = conCount + 1 /* M5 */
         if (segment(6) > 0.14 && segment(6) < 0.024) conCount = conCount + 1 /* M7 */

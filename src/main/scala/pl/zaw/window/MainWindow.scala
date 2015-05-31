@@ -8,6 +8,7 @@ import javax.swing.ToolTipManager
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
+import pl.zaw.core.config.ConfigUtil
 import pl.zaw.image.operations.filter._
 import pl.zaw.image.operations.{HelipadDetection, Moments, Segmentation, Threshold}
 import pl.zaw.image.util.SegmentationUtil
@@ -23,6 +24,7 @@ import scala.swing.event.{MouseEntered, MouseExited}
  */
 
 class MainWindow extends SimpleSwingApplication {
+  ConfigUtil.init("Helipad")
   private val logger = Logger(LoggerFactory.getLogger(this.getClass.getName))
   val preferredDimension = new Dimension(640, 480)
   //Some components
@@ -164,7 +166,9 @@ class MainWindow extends SimpleSwingApplication {
           Action("Area growth color") {
             additionalWindow.bufferedImage = Segmentation.getSegmentsColor(imagePanel.bufferedImage)._1
             logger.info(s"Color segmentation applied")
-          })
+          }) {
+          tooltip = s"Takes a long time and uses quite a lot of RAM memory!"
+        }
       }
       contents += new DefaultMenu("Helipad detection") {
         contents += new DefaultMenuItem(

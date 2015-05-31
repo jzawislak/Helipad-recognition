@@ -5,6 +5,8 @@ import java.awt.image.BufferedImage
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
+import pl.zaw.core.config.ConfigUtil
+import pl.zaw.core.config.Implicits._
 import pl.zaw.image.util.ColorHelper
 
 import scala.collection.mutable.ListBuffer
@@ -122,9 +124,9 @@ object Segmentation {
         val parentColor = head._2
         //pixel can be added to segment
         if (status2 == -1
-          && Math.abs(parentColor.getRed - color.getRed) < 3
-          && Math.abs(parentColor.getGreen - color.getGreen) < 3
-          && Math.abs(parentColor.getBlue - color.getBlue) < 3
+          && Math.abs(parentColor.getRed - color.getRed) <= ConfigUtil.get[Int]("color.segmentation_rgb_diff").getOrElse(2)
+          && Math.abs(parentColor.getGreen - color.getGreen) <= ConfigUtil.get[Int]("color.segmentation_rgb_diff").getOrElse(2)
+          && Math.abs(parentColor.getBlue - color.getBlue) <= ConfigUtil.get[Int]("color.segmentation_rgb_diff").getOrElse(2)
         ) {
           allSegmentsArray(headPosition._2)(headPosition._1) = segmentCount -> color
           allSegments.setRGB(headPosition._1, headPosition._2, newColor.getRGB)

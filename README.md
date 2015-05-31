@@ -11,6 +11,8 @@ In the main window user is able to perform such image operations:
     * Various Edge detecting
     * Ranking filters
 * Segmentation
+    * Black and white
+    * On colorful images
 * Calculating multiple shape descriptors
 
 To accumulate different operations:
