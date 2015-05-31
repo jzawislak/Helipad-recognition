@@ -139,11 +139,13 @@ object HelipadDetection {
     val heliFound = circleParams.filter { circle =>
       val relatedH = hParams.filter { h =>
         //Distance between central moments < 10% of max distance in H sign
-        if ((Math.sqrt(Math.pow(circle(22) - h(22), 2) + Math.pow(circle(23) - h(23), 2)) < 0.2 * h(17)
+        if ((Math.sqrt(Math.pow(circle(22) - h(22), 2) + Math.pow(circle(23) - h(23), 2)) < 0.35 * h(17)
           //Distance between average of min and max < 10% of max distance in H sign
-          || Math.sqrt(Math.pow((circle(18) + circle(19) - h(18) - h(19)) / 2, 2) + Math.pow((circle(20) + circle(21) - h(20) - h(21)) / 2, 2)) < 0.2 * h(17))
+          || Math.sqrt(Math.pow((circle(18) + circle(19) - h(18) - h(19)) / 2, 2) + Math.pow((circle(20) + circle(21) - h(20) - h(21)) / 2, 2)) < 0.35 * h(17))
           //max distance
-          && 1.1 * h(17) < circle(17)) {
+          && 1.5 * h(17) < circle(17)
+          && 5D * h(17) > circle(17)
+        ) {
           true
         } else {
           false
@@ -257,7 +259,7 @@ object HelipadDetection {
             if (truncateAt(segment(4), 5) == 0) conCount = conCount + 1 /* M5 */
             if (segment(6) > 0.14 && segment(6) < 0.24) conCount = conCount + 1 /* M7 */
             if (segment(13) > 0.35 && segment(13) <= 0.55) conCount = conCount + 1 /* W7 */
-            if (segment(14) > 0.11 && segment(14) < 0.16) conCount = conCount + 1 /* W8 */
+            if (segment(14) > 0.11 && segment(14) < 0.18) conCount = conCount + 1 /* W8 */
             if (segment(15) > 0.15 && segment(15) < 0.25) conCount = conCount + 1 /* W9 */
 
             if (conCount > 3) true else false
