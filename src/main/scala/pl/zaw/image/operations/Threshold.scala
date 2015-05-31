@@ -22,6 +22,7 @@ object Threshold {
     if (bufferedImage == null) {
       return null
     }
+    logger.info("Applying threshold.")
     val newImage = new BufferedImage(bufferedImage.getWidth, bufferedImage.getHeight, bufferedImage.getType)
     for {
       row <- 0 to bufferedImage.getHeight - 1

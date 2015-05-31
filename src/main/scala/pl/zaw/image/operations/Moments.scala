@@ -18,6 +18,7 @@ object Moments {
 
   def calculateParams(segment: (BufferedImage, Array[Array[(Int, Color)]], Int), logParams: Boolean) = segment match {
     case (_, allSegmentsArray: Array[Array[(Int, _)]], segmentsCount: Int) =>
+      logger.info("Calculating parameters.")
       //m parameters 2D array for all segments
       val mArray = Array.fill(segmentsCount)(
         Array(
@@ -54,8 +55,8 @@ object Moments {
 
           val mParameters = mArray(value)
           for {
-            mRow <- 0 until mParameters.length
-            mCol <- 0 until mParameters(0).length
+            mRow <- mParameters.indices
+            mCol <- mParameters(0).indices
           } {
             mParameters(mRow)(mCol) = mParameters(mRow)(mCol) + Math.pow(row, mRow) * Math.pow(col, mCol)
           }

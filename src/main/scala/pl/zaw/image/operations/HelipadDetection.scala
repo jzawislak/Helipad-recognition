@@ -1,10 +1,11 @@
 package pl.zaw.image.operations
 
-import java.awt.BasicStroke
 import java.awt.image.BufferedImage
+import java.awt.{BasicStroke, Font}
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
+import pl.zaw.image.operations.filter.{AverageFilter3, Filter}
 import pl.zaw.image.util.ColorHelper
 
 /**
@@ -23,21 +24,34 @@ object HelipadDetection {
     val resultImage = new BufferedImage(cm, raster, isAlphaPremultiplied, null)
     val graphics = resultImage.createGraphics()
     graphics.setStroke(new BasicStroke(10))
+    graphics.setFont(new Font("TimesRoman", Font.BOLD, 80))
 
     val segFound = if (path == 1) {
       path1(bufferedImage)
     } else if (path == 2) {
       path2(bufferedImage)
-    } else {
+    } else if (path == 3) {
       path3(bufferedImage)
+    } else {
+      path4(bufferedImage)
     }
 
+    //calculate distances only for path 3 and 4
+    val distances = if (path == 3 || path == 4) Some(detectHeliDistance(segFound)) else None
+
+    var i = -1
     for {
       segment <- segFound
     } {
+      i = i + 1
       graphics.setColor(ColorHelper.getRandomColor)
       val diameter = (segment(17) * 1.2).toInt
       graphics.drawOval(segment(23).toInt - diameter, segment(22).toInt - diameter, diameter * 2, diameter * 2)
+      for {
+        dist <- distances
+      } {
+        graphics.drawString(f"${dist(i)}%.0fcm", segment(23).toInt, segment(22).toInt)
+      }
     }
 
     resultImage
@@ -49,13 +63,11 @@ object HelipadDetection {
    * @return list of segments containing H marks
    */
   def path1(bufferedImage: BufferedImage) = {
-    logger.info("Applying threshold.")
     val thresholdImage = Threshold.convertAbsolute(bufferedImage, redLimit = (150, 255), greenLimit = (150, 255), blueLimit = (150, 255))
     //Minimum Rank filter is not used, because it takes a lot of time
     //and does not improve the results significantly.
     //    logger.info("Applying minimum filter.")
     //    val minimumRankImage = Filter.filter(thresholdImage, MinimumRankFilter3)
-    logger.info("Calculating segments.")
     val tup = Segmentation.getSegments(thresholdImage)
     val mParams = Moments.calculateParams(tup, logParams = false)
     val segFound = detectHFromParams(mParams)
@@ -71,13 +83,11 @@ object HelipadDetection {
    * @return list of segments containing H marks
    */
   def path2(bufferedImage: BufferedImage) = {
-    logger.info("Applying threshold.")
     val thresholdImage = Threshold.convertAbsolute(bufferedImage, redLimit = (150, 255), greenLimit = (150, 255), blueLimit = (0, 170))
     //Minimum Rank filter is not used, because it takes a lot of time
     //and does not improve the results significantly.
     //    logger.info("Applying minimum filter.")
     //    val minimumRankImage = Filter.filter(thresholdImage, MinimumRankFilter3)
-    logger.info("Calculating segments.")
     val tup = Segmentation.getSegments(thresholdImage)
     val mParams = Moments.calculateParams(tup, logParams = false)
     val segFound = detectCircleFromParams(mParams)
@@ -95,15 +105,53 @@ object HelipadDetection {
   def path3(bufferedImage: BufferedImage) = {
     logger.info("Searching for H marks.")
     val hFound = path1(bufferedImage)
-    logger.info("Searching for circles.")
+    logger.info("Searching for Circles.")
     val circleFound = path2(bufferedImage)
+    val heliFound = detectHeliFromParams(circleFound, hFound)
 
-    val heliFound = circleFound.filter { circle =>
-      val relatedH = hFound.filter { h =>
+    heliFound
+  }
+
+  /**
+   * Detects helipads.
+   * @param bufferedImage image to process
+   * @return list of segments containing H marks
+   */
+  def path4(bufferedImage: BufferedImage) = {
+    var filteredImage = bufferedImage
+    for {
+      i <- 1 to 3
+    } {
+      logger.info(s"Average filter number $i.")
+      filteredImage = Filter.filter(filteredImage, AverageFilter3)
+    }
+    val tup = Segmentation.getSegmentsColor(filteredImage)
+    val mParams = Moments.calculateParams(tup, logParams = false)
+    val circleFound = detectCircleFromParams(mParams)
+    val hFound = detectHFromParams(mParams)
+    val heliFound = detectHeliFromParams(circleFound, hFound)
+    heliFound
+  }
+
+  def detectHeliDistance(heliFound: Array[Array[Double]]) = {
+    for {
+      heli <- heliFound
+    } yield {
+      //constants for Samsung Galaxy S3 full resolution
+      190.61 / heli(17) * 100
+    }
+  }
+
+  def detectHeliFromParams(circleParams: Array[Array[Double]], hParams: Array[Array[Double]]) = {
+    logger.info("Detecting Heli.")
+    val heliFound = circleParams.filter { circle =>
+      val relatedH = hParams.filter { h =>
         //Distance between central moments < 10% of max distance in H sign
-        if (Math.sqrt(Math.pow(circle(22) - h(22), 2) + Math.pow(circle(23) - h(23), 2)) < 0.2 * h(17)
+        if ((Math.sqrt(Math.pow(circle(22) - h(22), 2) + Math.pow(circle(23) - h(23), 2)) < 0.2 * h(17)
           //Distance between average of min and max < 10% of max distance in H sign
-          || Math.sqrt(Math.pow((circle(18) + circle(19) - h(18) - h(19)) / 2, 2) + Math.pow((circle(20) + circle(21) - h(20) - h(21)) / 2, 2)) < 0.2 * h(17)) {
+          || Math.sqrt(Math.pow((circle(18) + circle(19) - h(18) - h(19)) / 2, 2) + Math.pow((circle(20) + circle(21) - h(20) - h(21)) / 2, 2)) < 0.2 * h(17))
+          //max distance
+          && 1.1 * h(17) < circle(17)) {
           true
         } else {
           false
@@ -118,6 +166,7 @@ object HelipadDetection {
   }
 
   def detectHFromParams(mParams: Array[Array[Double]]) = {
+    logger.info("Detecting H.")
     val hFound = mParams.filter(segment => {
       var conCount = 0
 
@@ -179,17 +228,19 @@ object HelipadDetection {
   }
 
   def detectCircleFromParams(mParams: Array[Array[Double]]) = {
+    logger.info("Detecting Circle.")
     val circleFound = mParams.filter(segment => {
       var conCount = 0
 
+      //M1 could be set as a must
       if (segment(24) > 250) /* area */ {
         if (segment(0) > 0.9 && segment(0) < 1.2) conCount = conCount + 1 /* M1 */
         if (truncateAt(segment(4), 5) == 0) conCount = conCount + 1 /* M5 */
         if (segment(6) > 0.14 && segment(6) < 0.024) conCount = conCount + 1 /* M7 */
         if ((segment(13) > 0.8 && segment(13) < 0.9)
           || (segment(13) > 0.55 && segment(13) < 0.9)) conCount = conCount + 1 /* W7 */
-        if (segment(14) > 0.11 && segment(14) < 0.15) conCount = conCount + 1 /* W8 */
-        if (segment(15) > 0.15 && segment(15) < 0.25) conCount = conCount + 1 /* W9 */
+        if (segment(14) > 0.09 && segment(14) < 0.15) conCount = conCount + 1 /* W8 */
+        if (segment(15) > 0.14 && segment(15) < 0.25) conCount = conCount + 1 /* W9 */
 
         if (conCount > 3) {
           true

@@ -157,8 +157,14 @@ class MainWindow extends SimpleSwingApplication {
             val mParams = Moments.calculateParams(tup, logParams = true)
             logger.info(s"Segmentation with m-params applied")
           }) {
-          tooltip = s"The difference are calculated params (shape descriptors) that are saved to ${SegmentationUtil.LOG_FILENAME} file."
+          tooltip = s"<html> The difference are calculated params (shape descriptors) that are saved to ${SegmentationUtil.LOG_FILENAME} file. <br>" +
+            "This should be used only for debugging.<html>"
         }
+        contents += new DefaultMenuItem(
+          Action("Area growth color") {
+            additionalWindow.bufferedImage = Segmentation.getSegmentsColor(imagePanel.bufferedImage)._1
+            logger.info(s"Color segmentation applied")
+          })
       }
       contents += new DefaultMenu("Helipad detection") {
         contents += new DefaultMenuItem(
@@ -175,6 +181,11 @@ class MainWindow extends SimpleSwingApplication {
           Action("Detect helipads") {
             additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, 3)
             logger.info(s"Helipads detected")
+          })
+        contents += new DefaultMenuItem(
+          Action("Detect helipads color") {
+            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, 4)
+            logger.info(s"Helipads from color detected")
           })
       }
     }

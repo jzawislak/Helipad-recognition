@@ -38,8 +38,10 @@ class AdditionalWindow(mainWindow: MainWindow) extends SimpleSwingApplication {
       contents += new Menu("File") {
         contents += new MenuItem(
           Action("Set as default") {
-            mainWindow.bufferedImage = imagePanel.bufferedImage
-            logger.info("Default image changed")
+            if (bufferedImage != null) {
+              mainWindow.bufferedImage = bufferedImage
+              logger.info("Default image changed")
+            }
           })
         contents += new MenuItem(Action("Close") {
           visible = false
