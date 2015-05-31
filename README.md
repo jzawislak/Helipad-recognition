@@ -23,9 +23,9 @@ To accumulate different operations:
  * ... and so on
 
 ##Detecting helipads
-There is also implemented a full path for helipad detection.
+There are also implemented two full paths for helipad detection.
 
-Algorithm steps are as follows:
+###First algorithm steps are as follows:
 
 1. Detect H signs.
     1. Threshold (leave white).
@@ -34,3 +34,14 @@ Algorithm steps are as follows:
     4. Filter H signs based on calculated shape descriptors.
 2. Detect circle signs. The same algorithm as for H sign. The only difference is leaving yellow instead of white.
 3. Combine H and circle together and filter only pairs with close centers.
+
+###Second algorithm steps are as follows:
+
+1. Apply multiple times 3x3 average, low pass filtering (usually between 1 and 3 times).
+2. Segmentation on colorful image.
+3. Calculate shape descriptors (only once).
+4. Detect H signs based on calculated shape descriptors.
+5. Detect circles based on calculated shape descriptors.
+6. Combine H and circle together and filter only pairs with close centers.
+
+Second algorithm is much slower 
