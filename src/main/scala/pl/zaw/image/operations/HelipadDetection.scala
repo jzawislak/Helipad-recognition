@@ -16,7 +16,7 @@ import pl.zaw.image.util.ColorHelper
 object HelipadDetection {
   private val logger = Logger(LoggerFactory.getLogger(this.getClass.getName))
 
-  def detectHelipad(bufferedImage: BufferedImage, path: Int): BufferedImage = {
+  def detectHelipad(bufferedImage: BufferedImage, path: (BufferedImage) => Array[Array[Double]]): BufferedImage = {
     //prepare copy of an image
     val cm = bufferedImage.getColorModel
     val isAlphaPremultiplied = cm.isAlphaPremultiplied
@@ -26,32 +26,16 @@ object HelipadDetection {
     graphics.setStroke(new BasicStroke(10))
     graphics.setFont(new Font("TimesRoman", Font.BOLD, 80))
 
-    val segFound = if (path == 1) {
-      path1(bufferedImage)
-    } else if (path == 2) {
-      path2(bufferedImage)
-    } else if (path == 3) {
-      path3(bufferedImage)
-    } else {
-      path4(bufferedImage)
-    }
+    val segFound = path(bufferedImage)
+    val distances = detectHeliDistance(segFound)
 
-    //calculate distances only for path 3 and 4
-    val distances = if (path == 3 || path == 4) Some(detectHeliDistance(segFound)) else None
-
-    var i = -1
     for {
-      segment <- segFound
+      (segment, distance) <- segFound.zip(distances)
     } {
-      i = i + 1
       graphics.setColor(ColorHelper.getRandomColor)
       val diameter = (segment(17) * 1.2).toInt
       graphics.drawOval(segment(23).toInt - diameter, segment(22).toInt - diameter, diameter * 2, diameter * 2)
-      for {
-        dist <- distances
-      } {
-        graphics.drawString(f"${dist(i)}%.0fcm", segment(23).toInt, segment(22).toInt)
-      }
+      graphics.drawString(f"$distance%.0fcm", segment(23).toInt, segment(22).toInt)
     }
 
     resultImage
@@ -62,7 +46,7 @@ object HelipadDetection {
    * @param bufferedImage image to process
    * @return list of segments containing H marks
    */
-  def path1(bufferedImage: BufferedImage) = {
+  def pathThresholdH(bufferedImage: BufferedImage) = {
     val thresholdImage = Threshold.convertAbsolute(bufferedImage, redLimit = (150, 255), greenLimit = (150, 255), blueLimit = (150, 255))
     //Minimum Rank filter is not used, because it takes a lot of time
     //and does not improve the results significantly.
@@ -82,7 +66,7 @@ object HelipadDetection {
    * @param bufferedImage image to process
    * @return list of segments containing H marks
    */
-  def path2(bufferedImage: BufferedImage) = {
+  def pathThresholdCircle(bufferedImage: BufferedImage) = {
     val thresholdImage = Threshold.convertAbsolute(bufferedImage, redLimit = (150, 255), greenLimit = (150, 255), blueLimit = (0, 170))
     //Minimum Rank filter is not used, because it takes a lot of time
     //and does not improve the results significantly.
@@ -102,11 +86,11 @@ object HelipadDetection {
    * @param bufferedImage image to process
    * @return list of segments containing H marks
    */
-  def path3(bufferedImage: BufferedImage) = {
+  def pathThresholdHeli(bufferedImage: BufferedImage) = {
     logger.info("Searching for H marks.")
-    val hFound = path1(bufferedImage)
+    val hFound = pathThresholdH(bufferedImage)
     logger.info("Searching for Circles.")
-    val circleFound = path2(bufferedImage)
+    val circleFound = pathThresholdCircle(bufferedImage)
     val heliFound = detectHeliFromParams(circleFound, hFound)
 
     heliFound
@@ -117,7 +101,7 @@ object HelipadDetection {
    * @param bufferedImage image to process
    * @return list of segments containing H marks
    */
-  def path4(bufferedImage: BufferedImage) = {
+  def pathColorHeli(bufferedImage: BufferedImage) = {
     var filteredImage = bufferedImage
     for {
       i <- 1 to 3

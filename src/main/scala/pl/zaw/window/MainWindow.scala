@@ -169,22 +169,22 @@ class MainWindow extends SimpleSwingApplication {
       contents += new DefaultMenu("Helipad detection") {
         contents += new DefaultMenuItem(
           Action("Detect H signs") {
-            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, 1)
+            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, HelipadDetection.pathThresholdH)
             logger.info(s"H signs detected")
           })
         contents += new DefaultMenuItem(
           Action("Detect circles") {
-            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, 2)
+            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, HelipadDetection.pathThresholdCircle)
             logger.info(s"Circles detected")
           })
         contents += new DefaultMenuItem(
           Action("Detect helipads") {
-            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, 3)
+            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, HelipadDetection.pathThresholdHeli)
             logger.info(s"Helipads detected")
           })
         contents += new DefaultMenuItem(
           Action("Detect helipads color") {
-            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, 4)
+            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, HelipadDetection.pathColorHeli)
             logger.info(s"Helipads from color detected")
           })
       }
