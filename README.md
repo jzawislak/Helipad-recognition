@@ -44,4 +44,4 @@ There are also implemented two full paths for helipad detection.
 5. Detect circles based on calculated shape descriptors.
 6. Combine H and circle together and filter only pairs with close centers.
 
-Second algorithm is much slower 
+Second algorithm is much slower because segmentation on colorful image produces much more segments.
