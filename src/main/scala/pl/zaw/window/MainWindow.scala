@@ -9,6 +9,7 @@ import javax.swing.ToolTipManager
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 import pl.zaw.core.config.ConfigUtil
+import pl.zaw.core.config.Implicits._
 import pl.zaw.image.operations.filter._
 import pl.zaw.image.operations.{HelipadDetection, Moments, Segmentation, Threshold}
 import pl.zaw.image.util.SegmentationUtil
@@ -122,7 +123,7 @@ class MainWindow extends SimpleSwingApplication {
         contents += new DefaultMenu("Absolute yellow") {
           tooltip = "Channels red and green between selected value and 255. Min=0, max=255."
           for (i <- 0 to 250 by 10) {
-            contents += new AbsoluteThresholdMenuItem(s"Yellow $i", redLimit = (i, 255), greenLimit = (i, 255), blueLimit = (0, 170)) {
+            contents += new AbsoluteThresholdMenuItem(s"Yellow $i", redLimit = (i, 255), greenLimit = (i, 255), blueLimit = (0, ConfigUtil.get[Int]("threshold.blue_threshold").getOrElse(170))) {
             }
           }
         }
