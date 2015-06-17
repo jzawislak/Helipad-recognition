@@ -199,6 +199,11 @@ class MainWindow extends SimpleSwingApplication {
             logger.info(s"Helipads detected")
           })
         contents += new DefaultMenuItem(
+          Action("Detect helipads with gamma 0.4 correction and single threshold") {
+            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, HelipadDetection.pathSingleThresholdHeliWithGamma)
+            logger.info(s"Helipads detected")
+          })
+        contents += new DefaultMenuItem(
           Action("Detect helipads color") {
             additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, HelipadDetection.pathColorHeli)
             logger.info(s"Helipads from color detected")

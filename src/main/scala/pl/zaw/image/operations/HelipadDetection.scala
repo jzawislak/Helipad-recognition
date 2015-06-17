@@ -107,8 +107,25 @@ object HelipadDetection {
   }
 
   def pathThresholdHeliWithGamma(bufferedImage: BufferedImage) = {
-    val gamma = Gamma.applyCorrection(bufferedImage, 0.4)
-    pathThresholdHeli(gamma)
+    val gammaImage = Gamma.applyCorrection(bufferedImage, 0.4)
+    pathThresholdHeli(gammaImage)
+  }
+
+  def pathSingleThresholdHeliWithGamma(bufferedImage: BufferedImage) = {
+    val gammaImage = Gamma.applyCorrection(bufferedImage, 0.4)
+    val thresholdImage = Threshold.convertAbsolute(gammaImage,
+      redLimit = (ConfigUtil.get[Int]("threshold.white_threshold").getOrElse(150), 255),
+      greenLimit = (ConfigUtil.get[Int]("threshold.white_threshold").getOrElse(150), 255),
+      blueLimit = (ConfigUtil.get[Int]("threshold.white_threshold").getOrElse(150), 255),
+      redLimit2 = (ConfigUtil.get[Int]("threshold.yellow_threshold").getOrElse(150), 255),
+      greenLimit2 = (ConfigUtil.get[Int]("threshold.yellow_threshold").getOrElse(150), 255),
+      blueLimit2 = (0, ConfigUtil.get[Int]("threshold.blue_threshold").getOrElse(170)))
+    val tup = Segmentation.getSegments(thresholdImage)
+    val mParams = Moments.calculateParams(tup, logParams = false)
+    val hFound = detectHFromParams(mParams)
+    val circleFound = detectCircleFromParams(mParams)
+    val heliFound = detectHeliFromParams(circleFound, hFound)
+    heliFound
   }
 
   /**
