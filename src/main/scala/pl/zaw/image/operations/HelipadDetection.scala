@@ -26,18 +26,20 @@ object HelipadDetection {
     val resultImage = new BufferedImage(cm, raster, isAlphaPremultiplied, null)
     val graphics = resultImage.createGraphics()
     graphics.setStroke(new BasicStroke(10))
-    graphics.setFont(new Font("TimesRoman", Font.BOLD, 80))
+    graphics.setFont(new Font("TimesRoman", Font.BOLD, 50))
 
     val segFound = path(bufferedImage)
     val distances = detectHeliDistance(segFound)
+    val positions = detectHeliPosition(segFound, bufferedImage)
 
     for {
-      (segment, distance) <- segFound.zip(distances)
+      ((segment, distance), (positionRow, positionCol)) <- segFound.zip(distances).zip(positions)
     } {
       graphics.setColor(ColorHelper.getRandomColor)
       val diameter = (segment(17) * 1.2).toInt
       graphics.drawOval(segment(23).toInt - diameter, segment(22).toInt - diameter, diameter * 2, diameter * 2)
       graphics.drawString(f"$distance%.0fcm", segment(23).toInt, segment(22).toInt)
+      graphics.drawString(f"  Ver:$positionRow/Hor:$positionCol", segment(23).toInt, segment(22).toInt + graphics.getFontMetrics.getHeight)
     }
 
     resultImage
@@ -104,6 +106,11 @@ object HelipadDetection {
     heliFound
   }
 
+  def pathThresholdHeliWithGamma(bufferedImage: BufferedImage) = {
+    val gamma = Gamma.applyCorrection(bufferedImage, 0.4)
+    pathThresholdHeli(gamma)
+  }
+
   /**
    * Detects helipads.
    * @param bufferedImage image to process
@@ -131,6 +138,17 @@ object HelipadDetection {
     } yield {
       //constants for Samsung Galaxy S3 full resolution
       190.61 / heli(17) * 100
+    }
+  }
+
+  def detectHeliPosition(heliFound: Array[Array[Double]], bufferedImage: BufferedImage) = {
+    val width = bufferedImage.getWidth
+    val height = bufferedImage.getHeight
+    for {
+      heli <- heliFound
+    } yield {
+      //22 row, 23 col
+      ((0.5 - heli(22) / height) * 100).toInt -> ((heli(23) / width - 0.5) * 100).toInt
     }
   }
 

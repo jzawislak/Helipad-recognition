@@ -10,8 +10,8 @@ import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory
 import pl.zaw.core.config.ConfigUtil
 import pl.zaw.core.config.Implicits._
+import pl.zaw.image.operations._
 import pl.zaw.image.operations.filter._
-import pl.zaw.image.operations.{HelipadDetection, Moments, Segmentation, Threshold}
 import pl.zaw.image.util.SegmentationUtil
 
 import scala.swing.BorderPanel.Position._
@@ -147,6 +147,12 @@ class MainWindow extends SimpleSwingApplication {
         }
         */
       }
+      contents += new DefaultMenu("Gamma correction") {
+        for (i <- 0D to 4D by 0.2) {
+          contents += new DefaultGammaMenuItem(i) {
+          }
+        }
+      }
       contents += new DefaultMenu("Segmentation") {
         contents += new DefaultMenuItem(
           Action("Area growth") {
@@ -185,6 +191,11 @@ class MainWindow extends SimpleSwingApplication {
         contents += new DefaultMenuItem(
           Action("Detect helipads") {
             additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, HelipadDetection.pathThresholdHeli)
+            logger.info(s"Helipads detected")
+          })
+        contents += new DefaultMenuItem(
+          Action("Detect helipads with gamma 0.4 correction") {
+            additionalWindow.bufferedImage = HelipadDetection.detectHelipad(imagePanel.bufferedImage, HelipadDetection.pathThresholdHeliWithGamma)
             logger.info(s"Helipads detected")
           })
         contents += new DefaultMenuItem(
@@ -237,6 +248,13 @@ class MainWindow extends SimpleSwingApplication {
     Action(filterType.title) {
       additionalWindow.bufferedImage = Filter.filter(imagePanel.bufferedImage, filterType)
       logger.info(s"Applied: ${filterType.title}")
+    }
+  )
+
+  class DefaultGammaMenuItem(gamma: Double) extends DefaultMenuItem(
+    Action(gamma.toString) {
+      additionalWindow.bufferedImage = Gamma.applyCorrection(imagePanel.bufferedImage, gamma)
+      logger.info(s"Applied gamma: $gamma")
     }
   )
 
